@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -783,10 +782,10 @@ elif page == "Health Chat Assistant":
                 st.markdown(f'<div class="bot-msg"><b>MediExplain AI:</b> {formatted_content}</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # User input with improved styling
+    # User input with improved styling - FIXED VERSION
+    user_input_key = "chat_input_" + str(len(st.session_state.chat_history))
     user_input = st.text_input("Describe your symptoms or ask a question:", 
-                              key="chat_input",
-                              value=st.session_state.get("chat_input", ""),
+                              key=user_input_key,
                               placeholder="Type your symptoms or health question here...")
     
     col1, col2 = st.columns([1, 6])
@@ -799,7 +798,6 @@ elif page == "Health Chat Assistant":
     
     if clear_button:
         st.session_state.chat_history = []
-        st.session_state.chat_input = ""
         st.rerun()
     
     if (send_button or user_input) and user_input.strip():
@@ -813,10 +811,7 @@ elif page == "Health Chat Assistant":
         # Add bot response to chat history
         st.session_state.chat_history.append({"role": "assistant", "content": response})
         
-        # Clear input field
-        st.session_state.chat_input = ""
-        
-        # Rerun to update the chat display
+        # Rerun to update the chat display and clear the input
         st.rerun()
     
     # Quick symptom buttons with fixed implementation
@@ -831,7 +826,16 @@ elif page == "Health Chat Assistant":
     for i, symptom in enumerate(common_symptoms):
         col_idx = i % 5
         if cols[col_idx].button(symptom, key=f"symptom_{i}", use_container_width=True):
-            st.session_state.chat_input = f"I'm experiencing {symptom.lower()}"
+            st.session_state.chat_history.append({"role": "user", "content": f"I'm experiencing {symptom.lower()}"})
+            
+            # Generate bot response
+            with st.spinner("Analyzing your symptoms..."):
+                response = health_chatbot.generate_response(f"I'm experiencing {symptom.lower()}")
+            
+            # Add bot response to chat history
+            st.session_state.chat_history.append({"role": "assistant", "content": response})
+            
+            # Rerun to update the chat display
             st.rerun()
     
     # Trusted sources information
